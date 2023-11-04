@@ -1,14 +1,22 @@
 "use client";
 
 import { useState } from "react";
-import { Photo } from "../icons/Photo";
-import { firestore, storage } from "../../firebase";
+import { Photo } from "../../components/icons/Photo";
+import { storage } from "../../firebase";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { addDoc, collection } from "@firebase/firestore";
 import { v4 as uuidv4 } from "uuid";
 
 import { useRouter } from "next/navigation";
-import { useAuth } from "../store/useAuth";
+import { useAuth } from "../../store/useAuth";
+
+import Link from "next/link";
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
+import { useContents } from "../../store/useContents";
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 export default function New() {
   // 새로운 feed를 생성
@@ -16,6 +24,18 @@ export default function New() {
   const [value, setValue] = useState();
   const router = useRouter();
   const { user } = useAuth();
+  const { createContent } = useContents();
+  if (!user)
+    return (
+      <div>
+        <Link href={"/auth"}> 로그인 </Link>을 해주세요
+      </div>
+    );
+
+  const location = dayjs.tz.guess().split("/")[1];
+  const backgroundImage =
+    user.profileImg ||
+    "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png";
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-between p-24">
@@ -25,12 +45,13 @@ export default function New() {
           <div className="flex items-center ">
             <div
               className={`rounded-full w-10 h-10
-              bg-[url('https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png')]
               bg-contain mr-2`}
-            />
+            >
+              <img className={`rounded-full w-10 h-10`} src={backgroundImage} />
+            </div>
             <div>
               <div className="font-semibold">{user.name}</div>
-              <div className="font-light">위치</div>
+              <div className="font-light">{location}</div>
             </div>
           </div>
           {/* 더보기 버튼 */}
@@ -86,20 +107,7 @@ export default function New() {
        bg-cover shadow-xl"
         onClick={async () => {
           try {
-            const docRef = await addDoc(collection(firestore, "feeds"), {
-              id: uuidv4(),
-              author: {
-                id: user.id,
-                name: user.name,
-                profileImg:
-                  "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png",
-              },
-              location: "seoul",
-              image: url,
-              text: value,
-              liked: [],
-            });
-            console.log(docRef); // undefined
+            await createContent({ location, image: url, text: value });
             router.push("/"); //
           } catch (error) {
             console.error(error);

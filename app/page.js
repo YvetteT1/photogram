@@ -1,11 +1,11 @@
 "use client";
 
-import { Feed } from "./components/Feed";
+import { Feed } from "../components/Feed";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { collection, getDocs } from "@firebase/firestore";
 import { firestore } from "../firebase";
-import { useAuth } from "./store/useAuth";
+import { useAuth } from "../store/useAuth";
 
 // 새로운 이미지를 올리는 화면
 // feeds 다른사람들의 피드를 보는 화면

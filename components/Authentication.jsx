@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "../store/useAuth";
 import { useRouter } from "next/navigation";
 
-export const Authentication = () => {
+export const Authentication = ( { children } ) => {
   const { user, signIn, signOut } = useAuth();
   const router = useRouter();
 

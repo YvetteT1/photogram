@@ -1,9 +1,9 @@
 
-import { Bookmark } from "../icons/Bookmark";
-import { DM } from "../icons/DM";
-import { Chat } from "../icons/Chat";
-import { Heart } from "../icons/Heart";
-import { Menu } from "../icons/Menu";
+import { Bookmark } from "./icons/Bookmark";
+import { DM } from "./icons/DM";
+import { Comment } from "./icons/Comment";
+import { Heart } from "./icons/Heart";
+import { Menu } from "./icons/Menu";
 
 
 /**
@@ -14,7 +14,14 @@ import { Menu } from "../icons/Menu";
  *   profileImg: string;
  * }
  */
-
+/**
+ * Comment
+ * {
+ *   id: string;
+ *   text: string
+ *   author: User
+ * }
+ */
 /**
  * Content
  * {
@@ -24,14 +31,44 @@ import { Menu } from "../icons/Menu";
  *   image: string;
  *   text: string;
  *   liked: User[]
+ *    comments:
  * }
  */
+
 
 //어떤 데이터가 필요한지 생각하고
 //위와 같이 객체를 먼저 구상한다.
 
 
-export const Feed = ({ content }) => {
+export const Feed = ({
+  loggedInUser,
+  content,
+  onUpdateContents,
+  onAddComment, 
+}) => {
+  const [commentInputVisible, setCommentInputVisible] = useState(false);
+  const backgroundImage =
+    content.author.profileImg ||
+    "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png";
+  const likedContent = (content.liked || []).some(
+    (id) => loggedInUser.id === id
+  );
+  const updateHeartButtonClick = async () => {
+    const nextLiked = likedContent
+      ? arrayRemove(loggedInUser.id)
+      : arrayUnion(loggedInUser.id);
+    await updateDoc(doc(firestore, "feeds", content.id), {
+      liked: nextLiked,
+    });
+    const nextContent = {
+      ...content,
+      liked: likedContent
+        ? content.liked.filter((id) => id !== loggedInUser.id)
+        : [...content.liked, loggedInUser.id],
+    };
+    onUpdateContents(nextContent);
+  };
+
   return (
     <div className="border-2 w-[400px] bg-white">
       <div id="header" className="flex items-center justify-between p-2">
@@ -54,6 +91,7 @@ export const Feed = ({ content }) => {
       </div>
       <div id="content" className="w-[400px] h-[400px]">
         <img
+          onDoubleClick={updateHeartButtonClick}
           className="object-cover	w-[400px] h-[400px]"
           src={content.image}
           alt="img"
@@ -61,15 +99,14 @@ export const Feed = ({ content }) => {
       </div>
       <div id="footer" className="flex items-center justify-between p-2">
         <div className="inner-left flex items-center justify-between w-24">
-            <div>
-              <Heart />
-            </div>
-            <div>
-              <Chat />  
-            </div>
-            <div>
-              <DM />
-            </div>
+          <button onClick={updateHeartButtonClick}>
+            <Heart color={likedContent ? "red" : null} />
+          </button>
+          
+          <button onClick={() => setCommentInputVisible(!commentInputVisible)}>
+            <Comment />
+          </button>  
+          <DM />
         </div>
         <div className="inner-right items-center">
             <div>
